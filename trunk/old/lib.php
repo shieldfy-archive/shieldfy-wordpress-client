@@ -1,5 +1,6 @@
 <?php
- if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
 define('SHIELDFY_SERVER_URL_CONST','https://shieldfy.com');
 define('SHIELDFY_API_URL_CONST','http://api2.shieldfy.com');
 
@@ -21,8 +22,8 @@ function _shieldfy_curl($url,$postdata = array(),$token){
 	curl_setopt($ch, CURLOPT_HEADER, 0);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
 	curl_setopt($ch,CURLOPT_HTTPHEADER,array('X-Shieldfy-Website-Key: '.$token));
-  curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+  	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+  	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
 	if(!empty($postdata)){
 		curl_setopt($ch,CURLOPT_POST, count($postdata));
 		$postdata = http_build_query(

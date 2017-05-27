@@ -49,7 +49,7 @@ function shieldfy_begin_install($token,$root,$admin){
     }
 
     $info['script'] = 'wordpress';
-		$token = trim($token);
+	$token = trim($token);
     $res = shieldfy_call_server('activate',array('info'=>$info),$token);
     //print_r($res);
     header('Content-Type: application/json');

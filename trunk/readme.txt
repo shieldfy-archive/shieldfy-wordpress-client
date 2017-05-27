@@ -1,6 +1,6 @@
 === Shieldfy Security Firewall and Anti Virus ===
 Contributors: eslamsalem
-Tags: security, antimalware,antivirus,xss,sql injection,csrf,firewall,malware,php backdoor,vulnerability, exploit, exploitation, file inclusion, hack, hackers, htaccess, malicious, protection, website security, sqli, attack,zeroday, ban, banned,php shells,botnet
+Tags: security, antimalware,antivirus,xss,sql injection,csrf,firewall,malware,php backdoor,vulnerability, exploit, exploitation, file inclusion, hack, hackers, htaccess, malicious, protection, website security, sqli, attack,zeroday, ban, banned,php shells,botnet,ransomware, ddos, clean, hack repair
 Requires at least: 3.0.1
 Tested up to: 4.6
 Stable tag: 2.0
@@ -51,7 +51,7 @@ Installation required to register to https://shieldfy.com to get your token
 
 = What is that plugin do ? =
 
-shieldfy plugin protects you from web attacks like xss , sql injection , local file inclusion ... etc and scan your website to detect malwares and backdoors
+shieldfy plugin protects you from web attacks like xss , sql injection , local file inclusion, Code injection ... etc and scan your website to detect malwares and backdoors.
 
 = is this plugin for free =
 

@@ -1,4 +1,4 @@
-#php
+<?php
 /**
  * Shieldfy Client
  * @version 4.5.0
@@ -234,7 +234,7 @@ class ShieldfyShield extends ShieldfyCoreShield{
 		foreach($_FILES as $name=>$info){
 			//check content if its illegal
 			$res = file_get_contents($info['tmp_name']);
-			if(strstr($res, '#php')){
+			if(strstr($res, '<?php')){
 				//its php file , exit now
 				$send = $this->compress(json_encode($send));
 				$this->blockAndReport(array('params'=>$send));
@@ -574,7 +574,7 @@ class ShieldfyScanner extends ShieldfyCoreShield{
 						continue;
 					}
 					$content = file_get_contents($dir->getPathname());
-					if(strstr($content, '#php')){
+					if(strstr($content, '<?php')){
 						if(isset($execludes[$dir->getPathname()])){
 							continue;
 						}
