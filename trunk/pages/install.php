@@ -76,7 +76,7 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
                 jQuery(obj).after(' &nbsp; &nbsp; <span class="label label-success">Shieldfy Activated successfully , You will redirect in a second ..</span>');
                 jQuery(obj).html('<i class="fa fa-check"></i> Done');
                 setTimeout(function(){
-                    location.href = location.href;
+                    //location.href = location.href;
                 },1000);
             }
         });

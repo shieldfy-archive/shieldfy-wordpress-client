@@ -71,13 +71,77 @@ class ShieldfyBase
         $result = $api->callUrl('install',$info);
 
         $res = json_decode($result);
-        print_r($result);
+        
+        if(!$res){
+            echo json_encode(array('status'=>'error','message'=>'Error contacting server , Try again later'));
+            return;
+        }
+
         if($res && $res->status == 'error'){
             echo json_encode(array('status'=>'error','message'=>'Wrong Key or Wrong Secret'));
             return;
         }
+        $rulesData = $res->data->general;
 
-        //print_r($result);
+        //start installation 
+
+        //copy shieldfy.php
+        $shield_code = file_get_contents(dirname(__FILE__).'/shieldfy.client.php');
+        $shield_code = str_replace('{{$APP_KEY}}', $key, $shield_code);
+        $shield_code = str_replace('{{$APP_SECRET}}', $secret, $shield_code);
+        $shield_code = str_replace('{{$API_SERVER_ENDPOINT}}', SHIELDFY_API_ENDPOINT.'/', $shield_code);
+        $host_root = '';
+        if(defined('SHIELDFY_ROOT_DIR')){
+            $host_root = SHIELDFY_ROOT_DIR;
+        }
+        if(function_exists('get_home_path')){
+            $host_root = get_home_path();
+        }
+        $host_admin = '';
+        if(function_exists('get_admin_url')){
+            $host_admin = get_admin_url();
+        }
+        $shield_code = str_replace('{{$HOST_ROOT}}', $host_root, $shield_code);
+        $shield_code = str_replace('{{$HOST_ADMIN}}',  $host_admin , $shield_code);
+
+        file_put_contents($host_root.'shieldfy.php', $shield_code);
+
+        //create directories //copy rules data
+        
+        @mkdir($host_root.'shieldfy');
+        file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR.".htaccess", "order deny,allow \n");
+        @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'data');
+        file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR."data".DIRECTORY_SEPARATOR."general.json", $res->data->general);
+        @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd');
+        @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd'.DIRECTORY_SEPARATOR.'ban');
+        @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd'.DIRECTORY_SEPARATOR.'firewall');
+        @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd'.DIRECTORY_SEPARATOR.'logs');
+        file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd'.DIRECTORY_SEPARATOR.".htaccess", "order deny,allow \n deny from all");
+
+        //add lines to htaccess or .user.ini
+
+        /**
+         *  $sapi_type = php_sapi_name();
+         *  if (substr($sapi_type, 0, 3) == 'cgi' || substr($sapi_type, 0, 3) == 'fpm') {
+         *           $firewall = "auto_prepend_file = ".$host_root."shieldfy.php";
+         *           insert_with_markers ( $host_root.'.user.ini', 'Shieldfy', $firewall );
+         *   }else{
+         *       $content .= "# ============= Firewall ============="."\n";
+         *       $content .= '<IfModule mod_php5.c>'."\n";
+         *       $content .= 'php_value auto_prepend_file "'.$host_root.'shieldfy.php"'."\n";
+         *       $content .= '</IfModule>'."\n";
+         *   }
+         *   $content = explode("\n",$content);
+         *   insert_with_markers ( $host_root.'.htaccess', 'Shieldfy', $content );
+         */
+
+        //update status with OK
+
+        /** update_option('shieldfy_active_plugin','1'); */
+
+        echo json_encode(array('status'=>'success'));
+        return;
+
     }
 
     public static function isUsingSSL()

@@ -14,8 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 /*****************************************************************************
  * constants and globals                                                     *
  *****************************************************************************/
-if (!defined( 'SHIELDFY_VERSION' )) {
-    define( 'SHIELDFY_VERSION', '2.1' );
+if (!defined( 'SHIELDFY_PLUGIN_VERSION' )) {
+    define( 'SHIELDFY_PLUGIN_VERSION', '2.1' );
 }
 if (!defined( 'SHIELDFY_PLUGIN_URL' )) {
     define( 'SHIELDFY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
