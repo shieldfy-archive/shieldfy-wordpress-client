@@ -13,6 +13,7 @@ class ShieldfyBase
     {
         $shieldfy_active = get_option('shieldfy_active_plugin');
         if($shieldfy_active){
+            
             //plugin activated check for firewall signature
             if(!defined('SHIELDFY_VERSION')){
                 //include the firewall if exists
@@ -86,7 +87,7 @@ class ShieldfyBase
         //start installation 
 
         //copy shieldfy.php
-        $shield_code = file_get_contents(dirname(__FILE__).'/shieldfy.client.php');
+        $shield_code = file_get_contents(SHIELDFY_PLUGIN_DIR . '/shieldfy.client.php');
         $shield_code = str_replace('{{$APP_KEY}}', $key, $shield_code);
         $shield_code = str_replace('{{$APP_SECRET}}', $secret, $shield_code);
         $shield_code = str_replace('{{$API_SERVER_ENDPOINT}}', SHIELDFY_API_ENDPOINT.'/', $shield_code);
@@ -112,6 +113,8 @@ class ShieldfyBase
         file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR.".htaccess", "order deny,allow \n");
         @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'data');
         file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR."data".DIRECTORY_SEPARATOR."general.json", $res->data->general);
+        $cert = file_get_contents(SHIELDFY_PLUGIN_DIR.'/certificate/cacert.pem');
+        file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR."data".DIRECTORY_SEPARATOR."cacert.pem", $cert);
         @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd');
         @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd'.DIRECTORY_SEPARATOR.'ban');
         @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd'.DIRECTORY_SEPARATOR.'firewall');
@@ -120,28 +123,30 @@ class ShieldfyBase
 
         //add lines to htaccess or .user.ini
 
-        /**
-         *  $sapi_type = php_sapi_name();
-         *  if (substr($sapi_type, 0, 3) == 'cgi' || substr($sapi_type, 0, 3) == 'fpm') {
-         *           $firewall = "auto_prepend_file = ".$host_root."shieldfy.php";
-         *           insert_with_markers ( $host_root.'.user.ini', 'Shieldfy', $firewall );
-         *   }else{
-         *       $content .= "# ============= Firewall ============="."\n";
-         *       $content .= '<IfModule mod_php5.c>'."\n";
-         *       $content .= 'php_value auto_prepend_file "'.$host_root.'shieldfy.php"'."\n";
-         *       $content .= '</IfModule>'."\n";
-         *   }
-         *   $content = explode("\n",$content);
-         *   insert_with_markers ( $host_root.'.htaccess', 'Shieldfy', $content );
-         */
+        
+        $sapi_type = php_sapi_name();
+        $content = '';
+        if (substr($sapi_type, 0, 3) == 'cgi' || substr($sapi_type, 0, 3) == 'fpm') {
+                $firewall = "auto_prepend_file = ".$host_root."shieldfy.php";
+                insert_with_markers ( $host_root.'.user.ini', 'Shieldfy', $firewall );
+        }else{
+            $content .= "# ============= Firewall ============="."\n";
+            $content .= '<IfModule mod_php5.c>'."\n";
+            $content .= 'php_value auto_prepend_file "'.$host_root.'shieldfy.php"'."\n";
+            $content .= '</IfModule>'."\n";
+        }
+        $content = explode("\n",$content);
+        insert_with_markers ( $host_root.'.htaccess', 'Shieldfy', $content );
+         
 
         //update status with OK
 
-        /** update_option('shieldfy_active_plugin','1'); */
+        update_option('shieldfy_active_plugin','1');
+        update_option('shieldfy_active_app_key',$key);
+        update_option('shieldfy_active_app_secret',$secret);
 
         echo json_encode(array('status'=>'success'));
         return;
-
     }
 
     public static function isUsingSSL()
@@ -153,6 +158,62 @@ class ShieldfyBase
 
     public static function uninstall()
     {
+        delete_option('shieldfy_active_plugin');
+        delete_option('shieldfy_active_app_key');
+        delete_option('shieldfy_active_app_secret');
 
+        if(defined('SHIELDFY_ROOT_DIR')){
+            $host_root = SHIELDFY_ROOT_DIR;
+        }
+        if(function_exists('get_home_path')){
+            $host_root = get_home_path();
+        }
+        //remove entry from htaccess
+        insert_with_markers ( $host_root.'.htaccess', 'Shieldfy', array() );
+        //temporary solution for php_value cache in apache
+        $php_ini = $host_root.'.user.ini';
+        if(file_exists($php_ini)){
+            insert_with_markers ( $php_ini, 'Shieldfy', array() );
+        }
+
+        
+        $dir = $host_root.'/shieldfy/';
+        @unlink($dir.'.htaccess');
+        @unlink($dir.'tmpd/.htaccess');
+        $res = scandir($dir.'data');
+        foreach($res as $re){
+            if(is_file($dir.'data/'.$re)){
+                @unlink($dir.'data/'.$re);
+            }
+        }
+
+        $res = scandir($dir.'tmpd/ban');
+        foreach($res as $re){
+            if(is_file($dir.'tmpd/ban/'.$re)){
+                @unlink($dir.'tmpd/ban/'.$re);
+            }
+        }
+        $res = scandir($dir.'tmpd/firewall');
+        foreach($res as $re){
+            if(is_file($dir.'tmpd/firewall/'.$re)){
+                @unlink($dir.'tmpd/firewall/'.$re);
+            }
+        }
+        $res = scandir($dir.'tmpd/logs');
+        foreach($res as $re){
+            if(is_file($dir.'tmpd/logs/'.$re)){
+                @unlink($dir.'tmpd/logs/'.$re);
+            }
+        }
+
+        @rmdir($dir.'data');
+        @rmdir($dir.'tmpd/ban');
+        @rmdir($dir.'tmpd/firewall');
+        @rmdir($dir.'tmpd/logs');
+        @rmdir($dir.'tmpd');
+        @rmdir($dir);
+
+        @file_put_contents($host_root,'');
+        
     }
 }
