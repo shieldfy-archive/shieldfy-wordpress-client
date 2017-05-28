@@ -12,17 +12,18 @@ define('SHIELDFY_VERSION','5.0.0');
 
 if(!defined('SHIELDFY_ROOT_DIR')) define('SHIELDFY_ROOT_DIR',dirname(__FILE__) . SHIELDFY_DS);
 if(!defined('SHIELDFY_DIR')) define('SHIELDFY_DIR',SHIELDFY_ROOT_DIR.'shieldfy'. SHIELDFY_DS);
-if(!defined('SHIElDFY_CACHE_DIR')) define('SHIElDFY_CACHE_DIR',SHIELDFY_DIR.'tmpd'. SHIELDFY_DS);
+if(!defined('SHIELDFY_CACHE_DIR')) define('SHIELDFY_CACHE_DIR',SHIELDFY_DIR.'tmpd'. SHIELDFY_DS);
+if(!defined('SHIELDFY_DATA_DIR')) define('SHIELDFY_DATA_DIR',SHIELDFY_DIR.'data'. SHIELDFY_DS);
 
-if(!defined('SHIELDFY_APP_KEY')) define('SHIELDFY_APP_KEY',"{{$APP_KEY}}");
-if(!defined('SHIELDFY_APP_SECRET')) define('SHIELDFY_APP_SECRET',"{{$APP_SECRET}}");
+if(!defined('SHIELDFY_APP_KEY')) define('SHIELDFY_APP_KEY',"sjgg04ldo");
+if(!defined('SHIELDFY_APP_SECRET')) define('SHIELDFY_APP_SECRET',"872e674a157abbcb113e60844c028293d0fc344c");
 
-if(!defined('SHIELDFY_API_ENDPOINT')) define('SHIELDFY_API_ENDPOINT',"{{$API_SERVER_ENDPOINT}}");
+if(!defined('SHIELDFY_API_ENDPOINT')) define('SHIELDFY_API_ENDPOINT',"http://api.flash.app");
 if(!defined('SHIELDFY_BLOCKVIEW')) define('SHIELDFY_BLOCKVIEW','<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Access Denied</title><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"><!--[if lt IE 9]><script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script><script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script><![endif]--></head><body><div class="container"><div class="row"><div class="col-sm-8 col-sm-offset-2"><div class="well" style="margin-top:80px;padding:40px;"><div class="row"><div class="col-sm-4"><img src="http://shieldfy.com/assets/img/block-sign.png" class="img-responsive"></div><div class="col-sm-8"><h1>Whooops!</h1><h4>Your request blocked for security reasons</h4><p>if you believe that your request shouldn\'t be blocked contact the administrator</p><hr/>Protected By <a href="http://shieldfy.com" target="_blank">Shieldfy</a> &trade; Web Shield </div></div></div></div></div></div></body></html>');
 
 /* Helper Classes */
 /* API Class */
-class ShieldfyAPI
+class ShieldfyAPIConnector
 {
     private $key = '';
     private $secret = '';
@@ -58,7 +59,7 @@ class ShieldfyAPI
     {
         curl_setopt($this->ch,CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($this->ch,CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($this->ch,CURLOPT_CAINFO, SHIELDFY_PLUGIN_DIR.'/certificate/cacert.pem');
+        curl_setopt($this->ch,CURLOPT_CAINFO, SHIELDFY_DATA_DIR.'/cacert.pem');
         return $this;
     }
 
@@ -903,46 +904,47 @@ class Normalize{
 /* Filter Class */
 class ShieldfyFilter
 {
-    private $block_impact = 11;
+    private $block_score = 11;
     private $filterSet;
     public function __construct()
     {
-        $this->filterSet = '';
+        
+        $filters = json_decode(file_get_contents(SHIELDFY_DATA_DIR.'general.json'));
+		$filters = $filters->rules;
+        $this->filterSet = (array)$filters;
     }
 
-    public function check($param = array())
+    public function check($params = array())
     {
         $info = array();
-        $res = array('status'=>0,'response'=>'non','danger'=>'low','impact'=>0,'infection'=>array());
+        $res = array('status'=>0,'response'=>'pass','danger'=>'low','score'=>0,'infection'=>array());
+        //print_r($param['get']);exit;
+		$this->analyze($params['get'],$res,'get');
+		$this->analyze($params['post'],$res,'post');
 
-        $info['method'] = 'get';
-		$this->analyze($params['get'],$res,$info);
-
-        $info['method'] = 'post';
-		$this->analyze($params['post'],$res,$info);
-
-        return array('res'=>$res,'params'=>$params);
+        //return array('res'=>$res,'params'=>$params);
+        return  $res['response'];
     }
 
-    public function analyze(&$params,&$res,$info){
+    public function analyze(&$params,&$res,$method){
 		foreach($params as $key=>$value):
             if(is_array($value)){
-                $this->analyze($params[$key],$res,$info);
+                $this->analyze($params[$key],$res,$method);
             }else{
-                $result  = $this->detect($key,$value,$info['method']);
-                if($result && $result['impact'] >= $this->block_impact):
+                $result  = $this->detect($key,$value,$method);
+                if($result && $result['score'] >= $this->block_score):
                     //found a thing
                     $res['status'] = 1;
-                    $res['impact'] += $result['impact'];
+                    $res['score'] += $result['score']; //change score to score
                     if($result['type'] == 'DDos'){
                         $res['ddos'] = 1;
                         $params[$key] = '[ddos]';
                     }
-                    $res['infection'][$info['method']][$key] = $result;
+                    $res['infection'][$method][$key] = $result;
 
-                    if($info['method'] == 'post' && $result['type'] == 'html' && $res['response'] != 'block'){ //if block there is no need to replace
-                        // double the impact for post html contents
-                        if($result['impact'] <= ($this->block_impact * 2)){
+                    if($method == 'post' && $result['type'] == 'html' && $res['response'] != 'block'){ //if block there is no need to replace
+                        // double the score for post html contents
+                        if($result['score'] <= ($this->block_score * 2)){
                             //cool we just give a warning
                             $res['danger'] = 'mid';
                             $res['response'] = 'pass';
@@ -968,14 +970,14 @@ class ShieldfyFilter
             $long = mb_substr($value, 0, 45); //longest word in major dectionary is 45 char long https://en.wikipedia.org/wiki/Longest_word_in_English
             if(!strstr($long, " ")){
                 //ddos
-                $res =  array('type'=>'DDos','impact'=>80,'ids'=>'2','tags'=>'DDos');
+                $res =  array('type'=>'DDos','score'=>80,'ids'=>'2','tags'=>'DDos');
                 return $res;
             }
             //check the last
             $long = mb_substr($value, -45);
             if(!strstr($long, " ")){
                 //ddos
-                $res =  array('type'=>'DDos','impact'=>80,'ids'=>'2','tags'=>'DDos');
+                $res =  array('type'=>'DDos','score'=>80,'ids'=>'2','tags'=>'DDos');
                 return $res;
             }
         }
@@ -985,7 +987,7 @@ class ShieldfyFilter
             $value = preg_replace('(\\\(["\'/]))im', '$1', $value);
         }
 
-        $impact = 0;
+        $score = 0;
 
         $non_value = str_replace(' ', '', $value);
         if($non_value == ''){
@@ -1002,7 +1004,7 @@ class ShieldfyFilter
         foreach($this->filterSet as $filter){
             $res = preg_match("/".$filter->rule."/i", strtolower($value),$matches);
             if($res){
-                $impact += $filter->impact;
+                $score += $filter->score;
                 $ids[] = $filter->id;
                 $length += strlen($matches[0]);
                 if(property_exists($filter, 'tags')){
@@ -1017,17 +1019,17 @@ class ShieldfyFilter
                 }
             }
         }
-        if( ($length >= (strlen($value) / 3)) && $impact != 0 ){ //if matched attack > 1/3 of the input add 5 to score
-            $impact += 5;
+        if( ($length >= (strlen($value) / 3)) && $score != 0 ){ //if matched attack > 1/3 of the input add 5 to score
+            $score += 5;
         }
 
-        if( ($method == 'get') && $impact != 0){ 
-            $impact += 5;
+        if( ($method == 'get') && $score != 0){ 
+            $score += 5;
         }
 
-        $res =  array('type'=>$type,'val'=>$value,'impact'=>$impact,'ids'=>$ids,'tags'=>$tags);
+        $res =  array('type'=>$type,'val'=>$value,'score'=>$score,'ids'=>$ids,'tags'=>$tags);
 
-        if($impact){
+        if($score){
             return $res;
         }else{
             return false;
@@ -1038,6 +1040,8 @@ class ShieldfyFilter
 
 /* ShieldfyShield */
 class ShieldfyCoreShield{
+    public $sessionID = '';
+    public $userIP = null;
 	/* Views */
 	public function block(){
 		$this->end(403,"Unauthorize Action :: Shieldfy Web Shield",SHIELDFY_BLOCKVIEW);
@@ -1053,8 +1057,19 @@ class ShieldfyCoreShield{
             'code'          => $code,
             'history'       => $this->session->getHistory()
      */
-    public function report($data,$block = false)
+    public function report($info,$block = false)
     {
+        $data = [
+            'incidentId'    => ip2long($this->userIP).time(), //maybe add appkey for ensure not duplicate
+            'host'          => $_SERVER['HTTP_HOST'],
+            'sessionId'     => $this->sessionID,
+            'ip'            => $this->userIP,
+            'monitor'       => 'general',
+            'judgment'      => $info,
+            'info'          => $info,
+            'code'          => array(),
+            'history'       => array()
+        ];
         $res = $this->callApi('activity',$data);
         if($block){
             $this->block();
@@ -1076,7 +1091,7 @@ class ShieldfyCoreShield{
 
 	/* Api */
 	public function callApi($route,$postdata = array()){
-		$api = new ShieldfyAPI(SHIELDFY_APP_KEY, SHIELDFY_APP_SECRET);
+		$api = new ShieldfyAPIConnector(SHIELDFY_APP_KEY, SHIELDFY_APP_SECRET);
         return $api->callUrl($route,$postdata);
 	}
 	public function getUserIP(){
@@ -1102,7 +1117,6 @@ class ShieldfyCoreShield{
 /* Main Shield Class */
 class ShieldfyShield extends ShieldfyCoreShield{
 	public $config = array();
-	public $userIP = null;
 	private static $_instance = null;
 	private function __construct () { }
 	public static function init ()
@@ -1114,16 +1128,38 @@ class ShieldfyShield extends ShieldfyCoreShield{
     }
 	public function shield(){
 		$this->userIP = $this->getUserIP();
+        //open session if not cached
+        $userID = ip2long($this->userIP);
+        $session_cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.$userID;
+        if(!file_exists($session_cache_file)){
+            $result = $this->callApi("session",array(
+                'user' => array(
+                    'id'        => $userID,
+                    'ip'        => $this->userIP,
+                    'userAgent' => 'xxx'
+                )
+            ));
+            $response = json_decode($result);
+            if ($response && $response->status == 'success') {
+                $this->sessionID = $response->sessionId;
+                file_put_contents($session_cache_file,$this->sessionID);
+            }else{
+                $this->sessionID = md5(time() * mt_rand());
+            }
+        }else{
+            $this->sessionID = file_get_contents($session_cache_file);
+        }
+               
 		$this->run();
 	}
 	private function run(){
-		/* check cached ban */
-		if($this->userIP && $this->userIP != 'UNKNOWN'){
-			$cache_file = SHIElDFY_CACHE_DIR.'ban'.SHIELDFY_DS.md5($this->userIP).'.shcache';
-			if(file_exists($cache_file)){
-				$this->block();
-			}
-		}
+		// /* check cached ban */
+		// if($this->userIP && $this->userIP != 'UNKNOWN'){
+		// 	$cache_file = SHIELDFY_CACHE_DIR.'ban'.SHIELDFY_DS.md5($this->userIP).'.shcache';
+		// 	if(file_exists($cache_file)){
+		// 		$this->block();
+		// 	}
+		// }
 		/* expose useful headers */
 		header('X-XSS-Protection: 1; mode=block');
 		header('X-Content-Type-Options: nosniff');
@@ -1162,12 +1198,12 @@ class ShieldfyShield extends ShieldfyCoreShield{
 			if(strstr($res, '<?php')){
 				//its php file , exit now
 				//$send = $this->compress(json_encode($send));
-				$this->report(array('params'=>$send), true);
+				$this->report($send, true);
 			}
 		}
-
+        // print_r($send);exit;
 		/* check cached firewall */
-		$cache_file = SHIElDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.md5(json_encode($send)).'.shcache';
+		$cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.md5(json_encode($send)).'.shcache';
 		if(file_exists($cache_file) && (filemtime($cache_file) + 3600 ) > time() && $result = file_get_contents($cache_file)) {
 			if($result == 'NO'){
 				$this->block();
@@ -1177,14 +1213,14 @@ class ShieldfyShield extends ShieldfyCoreShield{
 			//$send = $this->compress(json_encode($send));
 			//$result = $this->callApi("firewall/check",array('params'=>$send));
             $filter = new ShieldfyFilter;
-            $result = $filter->check(array('params'=>$send));
+            $result = $filter->check($send);
 
 
-			if($result && $result->status == 'pass'){
+			if($result == 'pass'){
 				/* pass lets cache it for a while */
 				@file_put_contents($cache_file, "YES");
 			}
-			if($result && $result->status == 'replace'){
+			if($result == 'replace'){
 				$get = (array)$result->get;
 				$post = (array)$result->post;
 				if($get){
@@ -1196,10 +1232,10 @@ class ShieldfyShield extends ShieldfyCoreShield{
 					$_POST = $post;
 				}
 			}
-			if($result && $result->status == 'block'){
+			if($result == 'block'){
 				/* block cache it then block */
 				@file_put_contents($cache_file, "NO");
-				$this->block();
+				$this->report($send, true);
 			}
 		}
 	}
@@ -1231,7 +1267,7 @@ endif;
 error_reporting(0);
 /* error handling */
 function ShieldfyErrorHandler($errno, $errstr, $errfile, $errline){
-	$fp = fopen(SHIElDFY_CACHE_DIR.'logs'.SHIELDFY_DS.'err_log.shieldfy', "a");
+	$fp = fopen(SHIELDFY_CACHE_DIR.'logs'.SHIELDFY_DS.'err_log.shieldfy', "a");
 	fwrite($fp, date("H:i:s")." :: $errno :: $errstr :: => $errfile:$errline"."\n");
 	fclose($fp);
 }
