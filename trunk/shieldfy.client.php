@@ -911,19 +911,23 @@ class ShieldfyFilter
         
         $filters = json_decode(file_get_contents(SHIELDFY_DATA_DIR.'general.json'));
         $this->filterSet = (array)$filters;
-        //print_r($this->filterSet);exit;
     }
 
     public function check($params = array())
     {
         $info = array();
-        $res = array('status'=>0,'response'=>'pass','danger'=>'low','score'=>0,'infection'=>array());
+        
+        $res = array(
+            'response' => 'pass',
+            'score' => 0,
+            'infection' => array()
+        );
         //print_r($param['get']);exit;
         $this->analyze($params['get'],$res,'get');
         $this->analyze($params['post'],$res,'post');
 
         //return array('res'=>$res,'params'=>$params);
-        return  $res['response'];
+        return  $res;
     }
 
     public function analyze(&$params,&$res,$method){
@@ -934,27 +938,27 @@ class ShieldfyFilter
                 $result  = $this->detect($key,$value,$method);
                 if($result && $result['score'] >= $this->block_score):
                     //found a thing
-                    $res['status'] = 1;
+                    //$res['status'] = 1;
                     $res['score'] += $result['score']; //change score to score
                     if($result['type'] == 'DDos'){
                         $res['ddos'] = 1;
                         $params[$key] = '[ddos]';
                     }
-                    $res['infection'][$method][$key] = $result;
+                    $res['infection'][$method.'.'.$key] = $result['ids'];
 
                     if($method == 'post' && $result['type'] == 'html' && $res['response'] != 'block'){ //if block there is no need to replace
                         // double the score for post html contents
                         if($result['score'] <= ($this->block_score * 2)){
                             //cool we just give a warning
-                            $res['danger'] = 'mid';
+                           // $res['danger'] = 'mid';
                             $res['response'] = 'pass';
                         }else{
                             //dangerous
-                            $res['danger'] = 'high';
+                           // $res['danger'] = 'high';
                             $res['response'] = 'block';
                         }
                     }else{
-                        $res['danger'] = 'high';
+                      //  $res['danger'] = 'high';
                         $res['response'] = 'block';
                     }
                 endif;
@@ -1001,22 +1005,13 @@ class ShieldfyFilter
         $ids = [];
         $length = 0;
         $tags = [];
-        foreach($this->filterSet as $filter){
+        foreach($this->filterSet as $id => $filter){
             $res = preg_match("/".$filter->rule."/i", strtolower($value),$matches);
             if($res){
                 $score += $filter->score;
-                $ids[] = $filter->id;
+                $ids[] = $id;
                 $length += strlen($matches[0]);
-                if(property_exists($filter, 'tags')){
-                    if(is_array($filter->tags->tag)){
-                        //vendor
-                        foreach($filter->tags->tag as $tag){
-                            $tags[] = $tag;
-                        }
-                    }
-                }else{
-                    $tags[] = $filter->type; //modified
-                }
+                
             }
         }
         if( ($length >= (strlen($value) / 3)) && $score != 0 ){ //if matched attack > 1/3 of the input add 5 to score
@@ -1046,20 +1041,11 @@ class ShieldfyCoreShield{
     public function block(){
         $this->end(403,"Unauthorize Action :: Shieldfy Web Shield",SHIELDFY_BLOCKVIEW);
     }
-    /**
-            'incidentId'    => $incidentId,
-            'host'          => $this->collectors['request']->getHost(),
-            'sessionId'     => $this->collectors['user']->getSessionId(),
-            'ip'            => $this->collectors['user']->getIp(), //just caution if initial session failed for any reason
-            'monitor'       => $this->name,
-            'judgment'      => $judgment,
-            'info'          => $this->collectors['request']->getProtectedInfo(),
-            'code'          => $code,
-            'history'       => $this->session->getHistory()
-     */
+    
     public function report($info , $judgment, $block = false)
     {
-        print_r($info);exit;
+        $info['created'] = time();
+        unset($judgment['response']);
         $data = [
             'incidentId'    => ip2long($this->userIP).time(), //maybe add appkey for ensure not duplicate
             'host'          => $_SERVER['HTTP_HOST'],
@@ -1183,7 +1169,6 @@ class ShieldfyShield extends ShieldfyCoreShield{
         $info = array(
             'get'     => $_GET,
             'post'    => $_POST,
-            'created' => time(),
             'method'  => (isset($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET',
             'uri'     => (isset($_SERVER['REQUEST_URI']))?$_SERVER['REQUEST_URI']:''
         );
@@ -1193,14 +1178,19 @@ class ShieldfyShield extends ShieldfyCoreShield{
             //check content if its illegal
             $res = file_get_contents($file['tmp_name']);
             if(strstr($res, '<?php')){
-                //its php file , exit now
-                //$send = $this->compress(json_encode($send));
-                $this->report($info, true);
+                //its php file , exit now                
+                $judgment = array(
+                    "score"=>200,
+                    "infection"=>array(
+                        "files.".$name => array()
+                    )                    
+                );
+                $this->report($info, $judgment, true);
             }
         }
 
         /* check cached firewall */
-        $cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.md5(json_encode($send)).'.shcache';
+        $cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.md5(json_encode($info)).'.shcache';
         if(file_exists($cache_file) && (filemtime($cache_file) + 3600 ) > time() && $result = file_get_contents($cache_file)) {
             if($result == 'NO'){
                 $this->block();
@@ -1210,14 +1200,14 @@ class ShieldfyShield extends ShieldfyCoreShield{
 
 
             $filter = new ShieldfyFilter;
-            $result = $filter->check($send);
+            $result = $filter->check($info);
 
 
-            if($result == 'pass'){
+            if($result['response'] == 'pass'){
                 /* pass lets cache it for a while */
                 @file_put_contents($cache_file, "YES");
             }
-            if($result == 'replace'){
+            if($result['response'] == 'replace'){
                 $get = (array)$result->get;
                 $post = (array)$result->post;
                 if($get){
@@ -1229,10 +1219,10 @@ class ShieldfyShield extends ShieldfyCoreShield{
                     $_POST = $post;
                 }
             }
-            if($result == 'block'){
-                /* block cache it then block */
+            if($result['response'] == 'block'){
+                /* block cache it then block */                
                 @file_put_contents($cache_file, "NO");
-                $this->report($info, true);
+                $this->report($info,$result, true);
             }
         }
     }
