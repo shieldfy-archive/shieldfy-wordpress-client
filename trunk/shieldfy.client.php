@@ -99,121 +99,121 @@ class ShieldfyAPIConnector
 }
 /* Detection Class */
 class Detect{
-	public static function run($value){
-		//number
-		if(is_numeric($value)){
-			return 'number';
-		}
-		//text
-		if(!preg_match('/[^a-z0-9\.\s]/isU', $value)){
-			return 'text';
-		}
-		//html & xml
-		if($hox = self::isHTMLorXML($value)){
-			return $hox;
-		}
-		//bbcode
-		$res = preg_match('/\[([a-z0-9\="#:\/\.]+)\](.*)\[\/([a-z0-9\="#:\/\.]+)\]/isU', $value,$matches);	
-		if($res){
-			return 'bbcode';
-		}
-		//json
-		if(self::isJson($value)){
-			return 'json';
-		}
-		//serialize
-		if(self::isSerialized($value)){
-			return 'serialized';
-		}
-		//xml
-		return 'unknown';
-	}
+    public static function run($value){
+        //number
+        if(is_numeric($value)){
+            return 'number';
+        }
+        //text
+        if(!preg_match('/[^a-z0-9\.\s]/isU', $value)){
+            return 'text';
+        }
+        //html & xml
+        if($hox = self::isHTMLorXML($value)){
+            return $hox;
+        }
+        //bbcode
+        $res = preg_match('/\[([a-z0-9\="#:\/\.]+)\](.*)\[\/([a-z0-9\="#:\/\.]+)\]/isU', $value,$matches);  
+        if($res){
+            return 'bbcode';
+        }
+        //json
+        if(self::isJson($value)){
+            return 'json';
+        }
+        //serialize
+        if(self::isSerialized($value)){
+            return 'serialized';
+        }
+        //xml
+        return 'unknown';
+    }
 
-	private static function isJson($value){
-		$r = json_decode($value);
-	 	$res =  (json_last_error() == JSON_ERROR_NONE);
-	 	return $res && (is_object($r) || is_array($r));
-	}
+    private static function isJson($value){
+        $r = json_decode($value);
+        $res =  (json_last_error() == JSON_ERROR_NONE);
+        return $res && (is_object($r) || is_array($r));
+    }
 
-	private static function isSerialized($value, &$result = null)
-	{
-		// Bit of a give away this one
-		if (!is_string($value))
-		{
-			return false;
-		}
-		// Serialized false, return true. unserialize() returns false on an
-		// invalid string or it could return false if the string is serialized
-		// false, eliminate that possibility.
-		if ($value === 'b:0;')
-		{
-			$result = false;
-			return true;
-		}
-		$length	= strlen($value);
-		$end	= '';
-		switch ($value[0])
-		{
-			case 's':
-				if ($value[$length - 2] !== '"')
-				{
-					return false;
-				}
-			case 'b':
-			case 'i':
-			case 'd':
-				// This looks odd but it is quicker than isset()ing
-				$end .= ';';
-			case 'a':
-			case 'O':
+    private static function isSerialized($value, &$result = null)
+    {
+        // Bit of a give away this one
+        if (!is_string($value))
+        {
+            return false;
+        }
+        // Serialized false, return true. unserialize() returns false on an
+        // invalid string or it could return false if the string is serialized
+        // false, eliminate that possibility.
+        if ($value === 'b:0;')
+        {
+            $result = false;
+            return true;
+        }
+        $length = strlen($value);
+        $end    = '';
+        switch ($value[0])
+        {
+            case 's':
+                if ($value[$length - 2] !== '"')
+                {
+                    return false;
+                }
+            case 'b':
+            case 'i':
+            case 'd':
+                // This looks odd but it is quicker than isset()ing
+                $end .= ';';
+            case 'a':
+                $end .= '}';
+                if ($value[1] !== ':')
+                {
+                    return false;
+                }
+                switch ($value[2])
+                {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+                    break;
+                    default:
+                        return false;
+                }
+            case 'O':
                 return false; //no serialization for object to prevent Object Injection Attack
-				$end .= '}';
-				if ($value[1] !== ':')
-				{
-					return false;
-				}
-				switch ($value[2])
-				{
-					case 0:
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-					case 5:
-					case 6:
-					case 7:
-					case 8:
-					case 9:
-					break;
-					default:
-						return false;
-				}
-			case 'N':
-				$end .= ';';
-				if ($value[$length - 1] !== $end[0])
-				{
-					return false;
-				}
-			break;
-			default:
-				return false;
-		}
-		if (($result = @unserialize($value)) === false)
-		{
-			$result = null;
-			return false;
-		}
-		return true;
-	}
-	private static function isHTMLorXML($value){
-		preg_match('/<[^?\/]+(>)?(.*)(\/>|<\/[a-z]+>)/isU', $value,$matches);
-		if($matches){
-			if(strstr($value,'<?xml')){
-				return 'xml';
-			}
-			return 'html';
-		}
-	}
+            case 'N':
+                $end .= ';';
+                if ($value[$length - 1] !== $end[0])
+                {
+                    return false;
+                }
+            break;
+            default:
+                return false;
+        }
+        if (($result = @unserialize($value)) === false)
+        {
+            $result = null;
+            return false;
+        }
+        return true;
+    }
+    private static function isHTMLorXML($value){
+        preg_match('/<[^?\/]+(>)?(.*)(\/>|<\/[a-z]+>)/isU', $value,$matches);
+        if($matches){
+            if(strstr($value,'<?xml')){
+                return 'xml';
+            }
+            return 'html';
+        }
+    }
 }
 /* Normalization Class */
 class Normalize{
@@ -910,8 +910,8 @@ class ShieldfyFilter
     {
         
         $filters = json_decode(file_get_contents(SHIELDFY_DATA_DIR.'general.json'));
-		$filters = $filters->rules;
         $this->filterSet = (array)$filters;
+        //print_r($this->filterSet);exit;
     }
 
     public function check($params = array())
@@ -919,15 +919,15 @@ class ShieldfyFilter
         $info = array();
         $res = array('status'=>0,'response'=>'pass','danger'=>'low','score'=>0,'infection'=>array());
         //print_r($param['get']);exit;
-		$this->analyze($params['get'],$res,'get');
-		$this->analyze($params['post'],$res,'post');
+        $this->analyze($params['get'],$res,'get');
+        $this->analyze($params['post'],$res,'post');
 
         //return array('res'=>$res,'params'=>$params);
         return  $res['response'];
     }
 
     public function analyze(&$params,&$res,$method){
-		foreach($params as $key=>$value):
+        foreach($params as $key=>$value):
             if(is_array($value)){
                 $this->analyze($params[$key],$res,$method);
             }else{
@@ -959,8 +959,8 @@ class ShieldfyFilter
                     }
                 endif;
             }
-	    endforeach;
-	}
+        endforeach;
+    }
 
 
     function detect($key,$value,$method){
@@ -1034,7 +1034,7 @@ class ShieldfyFilter
         }else{
             return false;
         }
-	}
+    }
 
 }
 
@@ -1042,10 +1042,10 @@ class ShieldfyFilter
 class ShieldfyCoreShield{
     public $sessionID = '';
     public $userIP = null;
-	/* Views */
-	public function block(){
-		$this->end(403,"Unauthorize Action :: Shieldfy Web Shield",SHIELDFY_BLOCKVIEW);
-	}
+    /* Views */
+    public function block(){
+        $this->end(403,"Unauthorize Action :: Shieldfy Web Shield",SHIELDFY_BLOCKVIEW);
+    }
     /**
             'incidentId'    => $incidentId,
             'host'          => $this->collectors['request']->getHost(),
@@ -1057,15 +1057,16 @@ class ShieldfyCoreShield{
             'code'          => $code,
             'history'       => $this->session->getHistory()
      */
-    public function report($info,$block = false)
+    public function report($info , $judgment, $block = false)
     {
+        print_r($info);exit;
         $data = [
             'incidentId'    => ip2long($this->userIP).time(), //maybe add appkey for ensure not duplicate
             'host'          => $_SERVER['HTTP_HOST'],
             'sessionId'     => $this->sessionID,
             'ip'            => $this->userIP,
             'monitor'       => 'general',
-            'judgment'      => $info,
+            'judgment'      => $judgment,
             'info'          => $info,
             'code'          => array(),
             'history'       => array()
@@ -1075,59 +1076,59 @@ class ShieldfyCoreShield{
             $this->block();
         }
     }
-	public function end($status = 403,$message = "",$html = ""){
-		@header($_SERVER["SERVER_PROTOCOL"].' '.$status.' '.$message);@die($html);
-	}
+    public function end($status = 403,$message = "",$html = ""){
+        @header($_SERVER["SERVER_PROTOCOL"].' '.$status.' '.$message);@die($html);
+    }
 
-	public function show($arr = array()){
-		header('Content-Type: application/json');
-		echo json_encode($arr);
-		exit;
-	}
-	public function response($status,$message = ''){
-		$arr = array('handshake'=>1,'status'=>$status,'message'=>$message);
-		$this->show($arr);
-	}
+    public function show($arr = array()){
+        header('Content-Type: application/json');
+        echo json_encode($arr);
+        exit;
+    }
+    public function response($status,$message = ''){
+        $arr = array('handshake'=>1,'status'=>$status,'message'=>$message);
+        $this->show($arr);
+    }
 
-	/* Api */
-	public function callApi($route,$postdata = array()){
-		$api = new ShieldfyAPIConnector(SHIELDFY_APP_KEY, SHIELDFY_APP_SECRET);
+    /* Api */
+    public function callApi($route,$postdata = array()){
+        $api = new ShieldfyAPIConnector(SHIELDFY_APP_KEY, SHIELDFY_APP_SECRET);
         return $api->callUrl($route,$postdata);
-	}
-	public function getUserIP(){
-		$ipaddress = '';
-			if (@$_SERVER['HTTP_CLIENT_IP']){
-				$ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-			}else if(@$_SERVER['HTTP_X_FORWARDED_FOR']){
-				$ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-			}else if(@$_SERVER['HTTP_X_FORWARDED']){
-				$ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-			}else if(@$_SERVER['HTTP_FORWARDED_FOR']){
-				$ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-			}else if(@$_SERVER['HTTP_FORWARDED']){
-				$ipaddress = $_SERVER['HTTP_FORWARDED'];
-			}else if(@$_SERVER['REMOTE_ADDR']){
-				$ipaddress = $_SERVER['REMOTE_ADDR'];
-			}else{
-				$ipaddress = 'UNKNOWN';
-			}
-		return $ipaddress;
-	}
+    }
+    public function getUserIP(){
+        $ipaddress = '';
+            if (@$_SERVER['HTTP_CLIENT_IP']){
+                $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+            }else if(@$_SERVER['HTTP_X_FORWARDED_FOR']){
+                $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            }else if(@$_SERVER['HTTP_X_FORWARDED']){
+                $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+            }else if(@$_SERVER['HTTP_FORWARDED_FOR']){
+                $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+            }else if(@$_SERVER['HTTP_FORWARDED']){
+                $ipaddress = $_SERVER['HTTP_FORWARDED'];
+            }else if(@$_SERVER['REMOTE_ADDR']){
+                $ipaddress = $_SERVER['REMOTE_ADDR'];
+            }else{
+                $ipaddress = 'UNKNOWN';
+            }
+        return $ipaddress;
+    }
 }
 /* Main Shield Class */
 class ShieldfyShield extends ShieldfyCoreShield{
-	public $config = array();
-	private static $_instance = null;
-	private function __construct () { }
-	public static function init ()
+    public $config = array();
+    private static $_instance = null;
+    private function __construct () { }
+    public static function init ()
     {
         if (self::$_instance === null) {
             self::$_instance = new self;
         }
         return self::$_instance;
     }
-	public function shield(){
-		$this->userIP = $this->getUserIP();
+    public function shield(){
+        $this->userIP = $this->getUserIP();
         //open session if not cached
         $userID = ip2long($this->userIP);
         $session_cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.$userID;
@@ -1136,7 +1137,7 @@ class ShieldfyShield extends ShieldfyCoreShield{
                 'user' => array(
                     'id'        => $userID,
                     'ip'        => $this->userIP,
-                    'userAgent' => 'xxx'
+                    'userAgent' => (isset($_SERVER['HTTP_USER_AGENT']))?$_SERVER['HTTP_USER_AGENT']:''
                 )
             ));
             $response = json_decode($result);
@@ -1150,95 +1151,91 @@ class ShieldfyShield extends ShieldfyCoreShield{
             $this->sessionID = file_get_contents($session_cache_file);
         }
                
-		$this->run();
-	}
-	private function run(){
-		// /* check cached ban */
-		// if($this->userIP && $this->userIP != 'UNKNOWN'){
-		// 	$cache_file = SHIELDFY_CACHE_DIR.'ban'.SHIELDFY_DS.md5($this->userIP).'.shcache';
-		// 	if(file_exists($cache_file)){
-		// 		$this->block();
-		// 	}
-		// }
-		/* expose useful headers */
-		header('X-XSS-Protection: 1; mode=block');
-		header('X-Content-Type-Options: nosniff');
+        $this->run();
+    }
+    private function run(){
+        
+        /* expose useful headers */
+        header('X-XSS-Protection: 1; mode=block');
+        header('X-Content-Type-Options: nosniff');
 
-		/* remove deprecated */
-		if(isset($HTTP_COOKIE_VARS)) $HTTP_COOKIE_VARS = array();
-		if(isset($HTTP_ENV_VARS)) $HTTP_ENV_VARS = array();
-		if(isset($HTTP_GET_VARS)) $HTTP_GET_VARS = array();
-		if(isset($HTTP_POST_VARS)) $HTTP_POST_VARS = array();
-		if(isset($HTTP_POST_FILES)) $HTTP_POST_FILES = array();
-		if(isset($HTTP_RAW_POST_DATA)) $HTTP_RAW_POST_DATA = array();
-		if(isset($HTTP_SERVER_VARS)) $HTTP_SERVER_VARS = array();
-		if(isset($HTTP_SESSION_VARS)) $HTTP_SESSION_VARS = array();
+        /* remove deprecated */
+        if(isset($HTTP_COOKIE_VARS)) $HTTP_COOKIE_VARS = array();
+        if(isset($HTTP_ENV_VARS)) $HTTP_ENV_VARS = array();
+        if(isset($HTTP_GET_VARS)) $HTTP_GET_VARS = array();
+        if(isset($HTTP_POST_VARS)) $HTTP_POST_VARS = array();
+        if(isset($HTTP_POST_FILES)) $HTTP_POST_FILES = array();
+        if(isset($HTTP_RAW_POST_DATA)) $HTTP_RAW_POST_DATA = array();
+        if(isset($HTTP_SERVER_VARS)) $HTTP_SERVER_VARS = array();
+        if(isset($HTTP_SESSION_VARS)) $HTTP_SESSION_VARS = array();
 
-		/* prepare GET */
-		$send['get'] = $_GET;
-		/* prepare POST */
-		$send['post'] = $_POST;
-		/* prepare SERVER */
-		$send['server']['ps'] = (isset($_SERVER['PHP_SELF']))?$_SERVER['PHP_SELF']:'';
-		$send['server']['pi'] = (isset($_SERVER['PATH_INFO']))?$_SERVER['PATH_INFO']:'';
-		/* get some info */
-		$send['info']['ip'] = $this->userIP;
-		$send['info']['uri'] = (isset($_SERVER['REQUEST_URI']))?$_SERVER['REQUEST_URI']:'';
-		$send['info']['ua'] = (isset($_SERVER['HTTP_USER_AGENT']))?$_SERVER['HTTP_USER_AGENT']:'';
-		$send['info']['rm'] = (isset($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'';
-		$send['info']['xrw'] = (isset($_SERVER['HTTP_X_REQUESTED_WITH']))?$_SERVER['HTTP_X_REQUESTED_WITH']:'';
-		$send['info']['ho'] = (isset($_SERVER['HTTP_ORIGIN']))?$_SERVER['HTTP_ORIGIN']:'';
-		$send['info']['hh'] = (isset($_SERVER['HTTP_HOST']))?$_SERVER['HTTP_HOST']:'';
-		$send['info']['r'] = (isset($_SERVER['HTTP_REFERER']))?$_SERVER['HTTP_REFERER']:'';
+        /*"method" : "GET",
+            "created" : 1494941709,
+            "score" : 0,
+            "uri" : "/xxxx/?sqli=%22%27%20union%20select%20*%20from%20admin%22",
+            "get" : {
+                "get．sqli" : "\"' union select * from admin\""
+            },
+            "post" : [ ]
 
-		/* check for illegal types of file uploads */
-		foreach($_FILES as $name=>$info){
-			//check content if its illegal
-			$res = file_get_contents($info['tmp_name']);
-			if(strstr($res, '<?php')){
-				//its php file , exit now
-				//$send = $this->compress(json_encode($send));
-				$this->report($send, true);
-			}
-		}
-        // print_r($send);exit;
-		/* check cached firewall */
-		$cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.md5(json_encode($send)).'.shcache';
-		if(file_exists($cache_file) && (filemtime($cache_file) + 3600 ) > time() && $result = file_get_contents($cache_file)) {
-			if($result == 'NO'){
-				$this->block();
-			}
-		}else{
-			@unlink($cache_file);
-			//$send = $this->compress(json_encode($send));
-			//$result = $this->callApi("firewall/check",array('params'=>$send));
+        */
+
+        $info = array(
+            'get'     => $_GET,
+            'post'    => $_POST,
+            'created' => time(),
+            'method'  => (isset($_SERVER['REQUEST_METHOD']))?$_SERVER['REQUEST_METHOD']:'GET',
+            'uri'     => (isset($_SERVER['REQUEST_URI']))?$_SERVER['REQUEST_URI']:''
+        );
+
+        /* check for illegal types of file uploads */
+        foreach($_FILES as $name=>$file){
+            //check content if its illegal
+            $res = file_get_contents($file['tmp_name']);
+            if(strstr($res, '<?php')){
+                //its php file , exit now
+                //$send = $this->compress(json_encode($send));
+                $this->report($info, true);
+            }
+        }
+
+        /* check cached firewall */
+        $cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.md5(json_encode($send)).'.shcache';
+        if(file_exists($cache_file) && (filemtime($cache_file) + 3600 ) > time() && $result = file_get_contents($cache_file)) {
+            if($result == 'NO'){
+                $this->block();
+            }
+        }else{
+            @unlink($cache_file);
+
+
             $filter = new ShieldfyFilter;
             $result = $filter->check($send);
 
 
-			if($result == 'pass'){
-				/* pass lets cache it for a while */
-				@file_put_contents($cache_file, "YES");
-			}
-			if($result == 'replace'){
-				$get = (array)$result->get;
-				$post = (array)$result->post;
-				if($get){
-					$get = json_decode(json_encode($get), true);
-					$_GET = $get;
-				}
-				if($post){
-					$post = json_decode(json_encode($post), true);
-					$_POST = $post;
-				}
-			}
-			if($result == 'block'){
-				/* block cache it then block */
-				@file_put_contents($cache_file, "NO");
-				$this->report($send, true);
-			}
-		}
-	}
+            if($result == 'pass'){
+                /* pass lets cache it for a while */
+                @file_put_contents($cache_file, "YES");
+            }
+            if($result == 'replace'){
+                $get = (array)$result->get;
+                $post = (array)$result->post;
+                if($get){
+                    $get = json_decode(json_encode($get), true);
+                    $_GET = $get;
+                }
+                if($post){
+                    $post = json_decode(json_encode($post), true);
+                    $_POST = $post;
+                }
+            }
+            if($result == 'block'){
+                /* block cache it then block */
+                @file_put_contents($cache_file, "NO");
+                $this->report($info, true);
+            }
+        }
+    }
 }
 
 
@@ -1248,8 +1245,8 @@ $uri = explode('/',$uri);
 $uri = @$uri[count($uri)-1];
 
 if($uri != 'shieldfy.php'):
-	/* main shield */
-	$signature = hash_hmac('sha256', SHIELDFY_APP_KEY, SHIELDFY_APP_SECRET);
+    /* main shield */
+    $signature = hash_hmac('sha256', SHIELDFY_APP_KEY, SHIELDFY_APP_SECRET);
     header('X-Web-Shield: ShieldfyWebShield');
     header('X-Shieldfy-Signature: '.$signature);
     if (function_exists('header_remove')) {
@@ -1257,8 +1254,8 @@ if($uri != 'shieldfy.php'):
     }else{
         header('X-Powered-By: NONE');
     }
-	ShieldfyShield::init()->shield();
-	return; //end shield
+    ShieldfyShield::init()->shield();
+    return; //end shield
 endif;
 
 /* internal shield server */
@@ -1267,8 +1264,8 @@ endif;
 error_reporting(0);
 /* error handling */
 function ShieldfyErrorHandler($errno, $errstr, $errfile, $errline){
-	$fp = fopen(SHIELDFY_CACHE_DIR.'logs'.SHIELDFY_DS.'err_log.shieldfy', "a");
-	fwrite($fp, date("H:i:s")." :: $errno :: $errstr :: => $errfile:$errline"."\n");
-	fclose($fp);
+    $fp = fopen(SHIELDFY_CACHE_DIR.'logs'.SHIELDFY_DS.'err_log.shieldfy', "a");
+    fwrite($fp, date("H:i:s")." :: $errno :: $errstr :: => $errfile:$errline"."\n");
+    fclose($fp);
 }
 $seh = set_error_handler("ShieldfyErrorHandler");
