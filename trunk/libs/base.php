@@ -21,11 +21,19 @@ class ShieldfyBase
                     @require_once(SHIELDFY_ROOT_DIR.'shieldfy.php');
                 }
             }
+
+            //check for proper version
+            if(SHIELDFY_SHIELD_VERSION != SHIELDFY_VERSION){
+                //old version of corrupted , run install again
+                $key = get_option('shieldfy_active_app_key');
+                $secret = get_option('shieldfy_active_app_secret');
+                self::install($key, $secret , true);
+            }
         }
         return true;
     }
 
-    public static function install($key, $secret)
+    public static function install($key, $secret, $silent = false)
     {
         $info = array(
             'host' => $_SERVER['HTTP_HOST'],
@@ -70,7 +78,6 @@ class ShieldfyBase
         
         $api = new ShieldfyAPI($key, $secret);
         $result = $api->callUrl('install',$info);
-
         $res = json_decode($result);
         
         if(!$res){
@@ -90,20 +97,20 @@ class ShieldfyBase
         $shield_code = file_get_contents(SHIELDFY_PLUGIN_DIR . '/shieldfy.client.php');
         $shield_code = str_replace('{{$APP_KEY}}', $key, $shield_code);
         $shield_code = str_replace('{{$APP_SECRET}}', $secret, $shield_code);
-        $shield_code = str_replace('{{$API_SERVER_ENDPOINT}}', SHIELDFY_API_ENDPOINT.'/', $shield_code);
+        $shield_code = str_replace('{{$API_SERVER_ENDPOINT}}', SHIELDFY_PLUGIN_API_ENDPOINT, $shield_code);
         $host_root = '';
         if(defined('SHIELDFY_ROOT_DIR')){
             $host_root = SHIELDFY_ROOT_DIR;
         }
-        if(function_exists('get_home_path')){
-            $host_root = get_home_path();
+        if(function_exists('get_home_url')){
+            $host_url = get_home_url();
         }
         $host_admin = '';
         if(function_exists('get_admin_url')){
             $host_admin = get_admin_url();
         }
-        $shield_code = str_replace('{{$HOST_ROOT}}', $host_root, $shield_code);
-        $shield_code = str_replace('{{$HOST_ADMIN}}',  $host_admin , $shield_code);
+        $shield_code = str_replace('{{$HOST_ROOT}}', $host_url, $shield_code);
+        $shield_code = str_replace('{{$HOST_ADMIN}}', str_replace($host_url,'',$host_admin) , $shield_code);
 
         file_put_contents($host_root.'shieldfy.php', $shield_code);
 
@@ -123,29 +130,30 @@ class ShieldfyBase
 
         //add lines to htaccess or .user.ini
 
-        
-        $sapi_type = php_sapi_name();
-        $content = '';
-        if (substr($sapi_type, 0, 3) == 'cgi' || substr($sapi_type, 0, 3) == 'fpm') {
-                $firewall = "auto_prepend_file = ".$host_root."shieldfy.php";
-                insert_with_markers ( $host_root.'.user.ini', 'Shieldfy', $firewall );
-        }else{
-            $content .= "# ============= Firewall ============="."\n";
-            $content .= '<IfModule mod_php5.c>'."\n";
-            $content .= 'php_value auto_prepend_file "'.$host_root.'shieldfy.php"'."\n";
-            $content .= '</IfModule>'."\n";
+        if(function_exists('insert_with_markers')){
+            $sapi_type = php_sapi_name();
+            $content = '';
+            if (substr($sapi_type, 0, 3) == 'cgi' || substr($sapi_type, 0, 3) == 'fpm') {
+                    $firewall = "auto_prepend_file = ".$host_root."shieldfy.php";
+                    insert_with_markers ( $host_root.'.user.ini', 'Shieldfy', $firewall );
+            }else{
+                $content .= "# ============= Firewall ============="."\n";
+                $content .= '<IfModule mod_php5.c>'."\n";
+                $content .= 'php_value auto_prepend_file "'.$host_root.'shieldfy.php"'."\n";
+                $content .= '</IfModule>'."\n";
+            }
+            $content = explode("\n",$content);
+            insert_with_markers ( $host_root.'.htaccess', 'Shieldfy', $content );
         }
-        $content = explode("\n",$content);
-        insert_with_markers ( $host_root.'.htaccess', 'Shieldfy', $content );
-         
 
         //update status with OK
 
         update_option('shieldfy_active_plugin','1');
         update_option('shieldfy_active_app_key',$key);
         update_option('shieldfy_active_app_secret',$secret);
-
-        echo json_encode(array('status'=>'success'));
+        if($silent == false){
+            echo json_encode(array('status'=>'success'));
+        }        
         return;
     }
 

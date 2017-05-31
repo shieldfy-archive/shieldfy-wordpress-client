@@ -13,9 +13,9 @@ require_once( SHIELDFY_PLUGIN_DIR . '/libs/ajax.php');
 
 shieldfy_firewall_init_check();
 
-register_activation_hook(__FILE__, 'shieldfy_activation');
-register_deactivation_hook(__FILE__, 'shieldfy_deactivation');
-register_uninstall_hook(__FILE__, 'shieldfy_uninstall' );
+register_activation_hook(__DIR__.'/shieldfy.php', 'shieldfy_activation');
+register_deactivation_hook(__DIR__.'/shieldfy.php', 'shieldfy_deactivation');
+register_uninstall_hook(__DIR__.'/shieldfy.php', 'shieldfy_uninstall' );
 
 add_action( 'muplugins_loaded', 'shieldfy_firewall_init_check' );
 add_action( 'plugins_loaded', 'shieldfy_firewall_init_check' );
@@ -25,8 +25,14 @@ add_action('admin_enqueue_scripts', 'shieldfy_include_assets' );
 add_action( 'admin_notices' , 'shieldfy_admin_notice' );
 
 function shieldfy_activation() { }
-function shieldfy_deactivation() { }
-function shieldfy_uninstall() { }
+function shieldfy_deactivation() { 
+   // echo 'deactivate';exit;
+    return ShieldfyBase::uninstall();
+}
+function shieldfy_uninstall() {
+   // echo 'uninstall';exit;
+    return ShieldfyBase::uninstall();
+}
 function shieldfy_firewall_init_check(){
     return ShieldfyBase::check();
 }

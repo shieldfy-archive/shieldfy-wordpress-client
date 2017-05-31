@@ -21,7 +21,7 @@ class ShieldfyAPI
     }
     public function callUrl($url , $data = array())
     {
-        $url = SHIELDFY_API_ENDPOINT .'/'.$url;
+        $url = SHIELDFY_PLUGIN_API_ENDPOINT .'/'.$url;
         return $this->init($url)
                     ->setCertificate()
                     ->setData($data)

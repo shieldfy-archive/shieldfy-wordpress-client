@@ -17,6 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 if (!defined( 'SHIELDFY_PLUGIN_VERSION' )) {
     define( 'SHIELDFY_PLUGIN_VERSION', '2.1' );
 }
+if (!defined( 'SHIELDFY_SHIELD_VERSION' )) {
+    define( 'SHIELDFY_SHIELD_VERSION', '5.0.0' );
+}
 if (!defined( 'SHIELDFY_PLUGIN_URL' )) {
     define( 'SHIELDFY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
@@ -45,8 +48,8 @@ if (!defined( 'SHIELDFY_ROOT_DATA_DIR' )) {
     define( 'SHIELDFY_ROOT_DATA_DIR', SHIELDFY_ROOT_DIR . 'shieldfy'  );
 }
 
-if(!defined('SHIELDFY_API_ENDPOINT')){
-    define( 'SHIELDFY_API_ENDPOINT', 'http://api.flash.app' );
+if(!defined('SHIELDFY_PLUGIN_API_ENDPOINT')){
+    define( 'SHIELDFY_PLUGIN_API_ENDPOINT', 'http://api.flash.app' );
 }
 
 if(!defined('SHIELDFY_ADMIN_URL')){
