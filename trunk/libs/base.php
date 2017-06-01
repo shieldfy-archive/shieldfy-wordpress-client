@@ -221,7 +221,7 @@ class ShieldfyBase
         @rmdir($dir.'tmpd');
         @rmdir($dir);
 
-        @file_put_contents($host_root,'');
+        @file_put_contents($host_root.'/shieldfy.php','');
         
     }
 }
