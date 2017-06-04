@@ -20,8 +20,8 @@
 	<h2>Welcome to Shieldfy</h2>
     <hr />
     <h3>
-        <span class="label label-info"><i class="fa fa-key"></i> Key: <?php echo get_option('shieldfy_active_app_key') ?></span> &nbsp;
-        <span class="label label-info"><i class="fa fa-key"></i> Secret: <?php echo get_option('shieldfy_active_app_secret') ?></span>
+        <span class="label label-info"><i class="fa fa-key"></i> Key: <?php echo get_option('shieldfy_active_app_key'); ?></span> &nbsp;
+        <span class="label label-info"><i class="fa fa-key"></i> Secret: <?php echo get_option('shieldfy_active_app_secret'); ?></span>
     </h3>
     <hr />
     <div class="row">
@@ -33,7 +33,7 @@
             </ul>
         </div>
         <div class="col-sm-6">
-            <a href="https://app.shieldfy.io" class="btn btn-block btn-lg btn-success" target="_blank"><i class="fa fa-dashboard"></i> Open the dashboard on https://shieldfy.io</a>
+            <a href="https://app.shieldfy.io/application/<?php echo get_option('shieldfy_active_app_key'); ?>/monitor" class="btn btn-block btn-lg btn-success" target="_blank"><i class="fa fa-dashboard"></i> Open the dashboard on https://shieldfy.io</a>
         </div>
     </div>
 </div>
