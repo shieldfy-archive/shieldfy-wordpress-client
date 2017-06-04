@@ -906,7 +906,7 @@ class Normalize{
 /* Filter Class */
 class ShieldfyFilter
 {
-    private $block_score = 11;
+    private $block_score = 70;
     private $filterSet;
     public function __construct()
     {
@@ -976,14 +976,14 @@ class ShieldfyFilter
             $long = mb_substr($value, 0, 45); //longest word in major dectionary is 45 char long https://en.wikipedia.org/wiki/Longest_word_in_English
             if(!strstr($long, " ")){
                 //ddos
-                $res =  array('type'=>'DDos','score'=>80,'ids'=>'2','tags'=>'DDos');
+                $res =  array('type'=>'DDos','score'=>90,'ids'=>'2','tags'=>'DDos');
                 return $res;
             }
             //check the last
             $long = mb_substr($value, -45);
             if(!strstr($long, " ")){
                 //ddos
-                $res =  array('type'=>'DDos','score'=>80,'ids'=>'2','tags'=>'DDos');
+                $res =  array('type'=>'DDos','score'=>90,'ids'=>'2','tags'=>'DDos');
                 return $res;
             }
         }
