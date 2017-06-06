@@ -101,7 +101,14 @@ class ShieldfyBase
         $host_root = '';
         if(defined('SHIELDFY_ROOT_DIR')){
             $host_root = SHIELDFY_ROOT_DIR;
+        }else{
+            if(function_exists('get_home_path')){
+                $host_root = get_home_path();
+            }else{
+                $host_root = get_blog_home_path();
+            }
         }
+        $host_url = '';
         if(function_exists('get_home_url')){
             $host_url = get_home_url();
         }
@@ -119,7 +126,7 @@ class ShieldfyBase
         @mkdir($host_root.'shieldfy');
         file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR.".htaccess", "order deny,allow \n");
         @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'data');
-        file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR."data".DIRECTORY_SEPARATOR."general.json", $res->data->general);
+        file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR."data".DIRECTORY_SEPARATOR."general.json", $rulesData);
         $cert = file_get_contents(SHIELDFY_PLUGIN_DIR.'/certificate/cacert.pem');
         file_put_contents($host_root.'shieldfy'.DIRECTORY_SEPARATOR."data".DIRECTORY_SEPARATOR."cacert.pem", $cert);
         @mkdir($host_root.'shieldfy'.DIRECTORY_SEPARATOR.'tmpd');
