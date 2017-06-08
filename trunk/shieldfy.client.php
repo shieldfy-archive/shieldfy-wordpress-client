@@ -1122,6 +1122,7 @@ class ShieldfyShield extends ShieldfyCoreShield{
         $session_cache_file = SHIELDFY_CACHE_DIR.'firewall'.SHIELDFY_DS.$userID;
         if(!file_exists($session_cache_file)){
             $result = $this->callApi("session",array(
+                'host' => $_SERVER['HTTP_HOST'],
                 'user' => array(
                     'id'        => $userID,
                     'ip'        => $this->userIP,
