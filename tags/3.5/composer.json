@@ -1,0 +1,15 @@
+{
+    "name": "shieldfy/shieldfy-wordpress-plugin",
+    "description": "wordpress plugin for shieldfy",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Shieldfy Team",
+            "email": "team@shieldfy.com"
+        }
+    ],
+    "require": {
+        "php" : "~5.6|~7.0",
+        "shieldfy/shieldfy-php-client": "3.*"
+    }
+}

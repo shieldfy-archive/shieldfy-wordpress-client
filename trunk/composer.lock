@@ -1,0 +1,185 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "ec538d6b2805601a608280fc44c513bc",
+    "packages": [
+        {
+            "name": "shieldfy/normalizer",
+            "version": "1.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/shieldfy/normalizer.git",
+                "reference": "415dae07f13142e97106b3fa6d35c759da99774f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/shieldfy/normalizer/zipball/415dae07f13142e97106b3fa6d35c759da99774f",
+                "reference": "415dae07f13142e97106b3fa6d35c759da99774f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6",
+                "shieldfy/sniffer": "1.*"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Shieldfy\\Normalizer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Shieldfy Inc.",
+                    "email": "team@shieldfy.com",
+                    "homepage": "https://shieldfy.com"
+                },
+                {
+                    "name": "Eslam Salem",
+                    "email": "eslam@shieldfy.com",
+                    "role": "Maintainer"
+                }
+            ],
+            "description": "This package is useful for the input normalization, before running hardcore IDS/IPS rules. It normalize the inputs to fight against WAF Bypassing techniques using obfuscation or other techniques to hide payloads.",
+            "keywords": [
+                "application",
+                "attack",
+                "bypass",
+                "detection",
+                "firewall",
+                "ids",
+                "ips",
+                "normalize",
+                "obfuscation",
+                "security",
+                "shieldfy"
+            ],
+            "time": "2017-04-16T09:27:20+00:00"
+        },
+        {
+            "name": "shieldfy/shieldfy-php-client",
+            "version": "3.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/shieldfy/shieldfy-php-client.git",
+                "reference": "db4a91b0805eb85f6847a2788616c385257fdb2e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/shieldfy/shieldfy-php-client/zipball/db4a91b0805eb85f6847a2788616c385257fdb2e",
+                "reference": "db4a91b0805eb85f6847a2788616c385257fdb2e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": "~5.6|~7.0",
+                "shieldfy/normalizer": "1.*"
+            },
+            "require-dev": {
+                "mikey179/vfsstream": "^1.6",
+                "phpdocumentor/phpdocumentor": "2.*",
+                "phpunit/phpunit": "~5.0||~6.0",
+                "squizlabs/php_codesniffer": "^2.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Shieldfy\\Extensions\\Laravel\\ShieldfyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Shieldfy\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "Shieldfy Inc.",
+                    "email": "team@shieldfy.io",
+                    "homepage": "https://shieldfy.io"
+                }
+            ],
+            "description": "This is the official PHP SDK for Shieldfy (shieldfy.io)",
+            "homepage": "https://github.com/shieldfy/shieldfy-php-client",
+            "keywords": [
+                "shieldfy",
+                "shieldfy-php-client"
+            ],
+            "time": "2018-04-09T17:55:44+00:00"
+        },
+        {
+            "name": "shieldfy/sniffer",
+            "version": "1.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/shieldfy/sniffer.git",
+                "reference": "e12f879c4381e7c070cbc8ddfbf275d8f9443c34"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/shieldfy/sniffer/zipball/e12f879c4381e7c070cbc8ddfbf275d8f9443c34",
+                "reference": "e12f879c4381e7c070cbc8ddfbf275d8f9443c34",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "5.5.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Shieldfy\\Sniffer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Shieldfy Inc.",
+                    "email": "team@shieldfy.com",
+                    "homepage": "https://shieldfy.com"
+                },
+                {
+                    "name": "Eslam Salem",
+                    "email": "eslam@shieldfy.com"
+                }
+            ],
+            "description": "sniff input types",
+            "homepage": "https://shieldfy.com",
+            "keywords": [
+                "detection",
+                "shieldfy",
+                "sniffer"
+            ],
+            "time": "2017-08-03T12:07:23+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": "~5.6|~7.0"
+    },
+    "platform-dev": []
+}
